@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/your-repo-name
+      IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/spring-boot-ci
 
     steps:
       - name: Checkout code
