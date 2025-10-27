@@ -1,0 +1,64 @@
+name: CI/CD - Build, Test, Docker Push
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-test-and-push:
+    runs-on: ubuntu-latest
+
+    env:
+      IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/your-repo-name
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.m2/repository
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-m2-
+
+      - name: Run unit tests
+        run: mvn -B test
+
+      - name: Build executable JAR
+        run: mvn -B -DskipTests package
+
+      - name: Prepare docker context (copy jar)
+        run: |
+          mkdir -p docker-context
+          JAR=$(ls target/*.jar | head -n 1)
+          cp "$JAR" docker-context/app.jar
+          cp Dockerfile docker-context/
+          cp .dockerignore docker-context/ || true
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: "Build and push Docker image (tag: latest and commit sha)"
+        uses: docker/build-push-action@v5
+        with:
+          context: docker-context
+          push: true
+          tags: |
+            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}:${{ github.sha }}
+      
