@@ -23,7 +23,6 @@ jobs:
           java-version: '21'
           cache: maven
 
-
       - name: Cache Maven packages
         uses: actions/cache@v4
         with:
@@ -53,7 +52,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: "Build and push Docker image (tag: latest and commit sha)"
+      - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: docker-context
@@ -61,4 +60,3 @@ jobs:
           tags: |
             ${{ env.IMAGE_NAME }}:latest
             ${{ env.IMAGE_NAME }}:${{ github.sha }}
-      
